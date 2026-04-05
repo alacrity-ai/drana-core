@@ -1,8 +1,29 @@
 # DRANA
 
-A purpose-built blockchain for a market-based attention economy.
+**An uncensorable social platform powered by its own blockchain.**
 
-Users burn DRANA to publish short immutable text posts. Others burn more DRANA to boost those posts. Validators stake DRANA to secure the network and earn block rewards. The result is a circulating attention economy: issuance in, burn out, with the market finding equilibrium.
+DRANA is Reddit on a blockchain. Anyone can post, anyone can boost, and no one can take it down. There are no moderators, no algorithms deciding what you see, and no company that can pull the plug. Every post, every vote, every interaction is an on-chain transaction — permanent, transparent, and owned by you.
+
+Instead of upvotes, you put your money where your mouth is. Stake DRANA on a post to push it up the feed. If others stake on posts you're invested in, you earn rewards. The best content rises because people are willing to back it with real value — not because an algorithm decided to promote it.
+
+**Your keys, your voice, your stake.**
+
+<p align="center">
+  <img src="images/dranapic1.PNG" width="320" alt="DRANA feed" />
+</p>
+<p align="center"><em>The feed — posts ranked by stake, filterable by channel. Put skin in the game or just browse.</em></p>
+
+<p align="center">
+  <img src="images/dranapic2.PNG" width="320" alt="Post detail view" />
+</p>
+<p align="center"><em>Post detail — see who staked, how much was burned in fees, and add replies. Unstake anytime.</em></p>
+
+<p align="center">
+  <img src="images/dranapic3.PNG" width="320" alt="Rewards page" />
+</p>
+<p align="center"><em>Rewards — track your stakes, see earnings in real time. Authors and stakers both earn when posts get boosted.</em></p>
+
+---
 
 ## Core Concepts
 

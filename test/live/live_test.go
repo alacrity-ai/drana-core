@@ -27,7 +27,7 @@ import (
 const (
 	nodeRPC    = "http://localhost:26657"
 	indexerAPI = "http://localhost:26680"
-	blockWait  = 130 * time.Second // slightly more than 120s block interval
+	blockWait  = 12 * time.Second // slightly more than 10s block interval
 )
 
 // wallet holds a test user's identity.
