@@ -33,36 +33,7 @@ A small share button on each post card and post detail view. Tapping it copies a
 
 ---
 
-## 2. Remove Wallet (Standalone Access)
-
-### Problem
-
-The "Remove wallet" option currently only appears inside the "Forgot password?" flow of the Unlock modal. A user who is logged in and wants to remove their wallet (e.g. on a shared computer) has no obvious way to do it. It should be accessible from a top-level settings or wallet management area.
-
-### MVP
-
-An explicit "Remove Wallet" option accessible from the wallet dropdown or a wallet settings section. Requires confirmation before deletion.
-
-### Acceptance Criteria
-
-- "Remove Wallet" option accessible while the wallet is unlocked (not buried behind "Forgot password?").
-- Confirmation prompt warns that this is irreversible without a private key backup.
-- User must type their address (or a confirmation phrase) to confirm.
-- After removal, app resets to the no-wallet state (or switches to another wallet if multi-wallet).
-- The existing remove flow in the Forgot Password section continues to work as-is.
-
-### Proposed Implementation
-
-**Frontend only — no backend changes.**
-
-- Add a "Remove Wallet" button to the wallet dropdown in `TopBar.tsx` (or a new wallet settings modal).
-- Reuse the existing confirmation UI from `UnlockWalletModal` (type-address-to-confirm pattern).
-- Call `removeWallet(address)` from `WalletContext` on confirmation.
-- If the user has multiple wallets, switch to the next one. If it was the last wallet, show the welcome/create-wallet state.
-
----
-
-## 3. Keyword Search
+## 2. Keyword Search
 
 ### Problem
 
@@ -109,5 +80,5 @@ A search bar in the feed header. User types a keyword, hits enter, and sees post
 
 - FTS5/GIN indexes are write-cheap and read-fast for keyword lookups.
 - Avoid `LIKE '%keyword%'` — it requires a full table scan.
-- Consider limiting search to top-level posts (exclude replies) to reduce result set.
+- Definitely limit search to top-level posts (exclude replies) to reduce result set.
 - If the dataset grows very large, consider a dedicated search service (e.g. Meilisearch) behind the indexer API, but this is premature for MVP.

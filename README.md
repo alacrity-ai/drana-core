@@ -186,6 +186,10 @@ A new validator only needs the genesis file and one reachable seed to join. Peer
 
 Current seed: `genesis-validator.drana.io:26601` (see [TODO.md](TODO.md) for DNS setup status)
 
+## License
+
+DRANA Core is licensed under the [Business Source License 1.1](LICENSE.md). You may view, fork, and modify the code for non-commercial and non-production purposes. Commercial use requires a separate license from Alacrity AI. The license converts to Apache 2.0 on April 5, 2030.
+
 ## Protocol Parameters (Testnet Defaults)
 
 | Parameter | Value |
