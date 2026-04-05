@@ -1,0 +1,57 @@
+syntax = "proto3";
+package drana.v1;
+option go_package = "github.com/drana-chain/drana/internal/proto/pb";
+
+import "types.proto";
+
+message BlockProposal {
+  Block block = 1;
+}
+
+message FinalizedBlock {
+  Block block = 1;
+  QuorumCertificate qc = 2;
+}
+
+message SyncRequest {
+  uint64 from_height = 1;
+  uint64 to_height = 2;
+}
+
+message SyncResponse {
+  repeated FinalizedBlock blocks = 1;
+}
+
+message PeerStatus {
+  bytes address = 1;
+  uint64 latest_height = 2;
+  bytes latest_block_hash = 3;
+  string chain_id = 4;
+}
+
+message TxSubmission {
+  Transaction tx = 1;
+}
+
+message TxSubmissionResponse {
+  bool accepted = 1;
+  string error = 2;
+}
+
+message PeerExchangeRequest {
+  string sender_addr = 1;          // the requester's listen address
+  repeated string known_peers = 2; // peers the requester already knows
+}
+
+message PeerExchangeResponse {
+  repeated string peers = 1;       // peers the responder knows
+}
+
+service ConsensusService {
+  rpc ProposeBlock(BlockProposal) returns (BlockVote);
+  rpc NotifyFinalizedBlock(FinalizedBlock) returns (PeerStatus);
+  rpc SyncBlocks(SyncRequest) returns (SyncResponse);
+  rpc GetStatus(PeerStatus) returns (PeerStatus);
+  rpc SubmitTx(TxSubmission) returns (TxSubmissionResponse);
+  rpc ExchangePeers(PeerExchangeRequest) returns (PeerExchangeResponse);
+}

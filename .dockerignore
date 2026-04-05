@@ -1,0 +1,4 @@
+bin/
+testnet/
+*.db
+.git

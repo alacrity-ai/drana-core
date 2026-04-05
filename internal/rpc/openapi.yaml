@@ -1,0 +1,447 @@
+openapi: "3.0.3"
+info:
+  title: DRANA Node RPC
+  description: |
+    JSON HTTP API for the DRANA blockchain node. Use this to query chain state,
+    submit transactions, and inspect blocks.
+
+    All amounts are in **microdrana** (1 DRANA = 1,000,000 microdrana).
+    Hex values are lowercase, no `0x` prefix.
+    Addresses use the `drana1` display format.
+  version: "1.0.0"
+
+tags:
+  - name: Chain
+    description: Node and block information
+  - name: Accounts
+    description: Account balances, staking, and unbonding
+  - name: Posts
+    description: On-chain text posts
+  - name: Transactions
+    description: Submit and query transactions
+  - name: Network
+    description: Validators and peers
+
+paths:
+  /v1/node/info:
+    get:
+      tags: [Chain]
+      summary: Get node info
+      description: Returns chain status, supply statistics, and epoch information.
+      responses:
+        "200":
+          description: Node info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NodeInfo"
+
+  /v1/blocks/latest:
+    get:
+      tags: [Chain]
+      summary: Get latest block
+      parameters:
+        - name: full
+          in: query
+          schema: { type: boolean, default: false }
+          description: Include full transaction list
+      responses:
+        "200":
+          description: Latest block
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Block"
+
+  /v1/blocks/{height}:
+    get:
+      tags: [Chain]
+      summary: Get block by height
+      parameters:
+        - name: height
+          in: path
+          required: true
+          schema: { type: string, description: "uint64 encoded as string" }
+        - name: full
+          in: query
+          schema: { type: boolean, default: false }
+      responses:
+        "200":
+          description: Block
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Block"
+        "404":
+          description: Block not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /v1/blocks/hash/{hash}:
+    get:
+      tags: [Chain]
+      summary: Get block by hash
+      parameters:
+        - name: hash
+          in: path
+          required: true
+          schema: { type: string, pattern: "^[a-f0-9]{64}$" }
+          description: Block header hash (64-char hex)
+        - name: full
+          in: query
+          schema: { type: boolean, default: false }
+      responses:
+        "200":
+          description: Block
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Block"
+        "404":
+          description: Block not found
+
+  /v1/accounts/{address}:
+    get:
+      tags: [Accounts]
+      summary: Get account
+      description: Returns balance, staked balance, nonce, and name. Returns zero values for unknown addresses (not 404).
+      parameters:
+        - name: address
+          in: path
+          required: true
+          schema: { type: string }
+          description: Account address (drana1...)
+      responses:
+        "200":
+          description: Account info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+
+  /v1/accounts/{address}/unbonding:
+    get:
+      tags: [Accounts]
+      summary: Get unbonding entries
+      description: Returns pending unbonding entries for an address.
+      parameters:
+        - name: address
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Unbonding info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Unbonding"
+
+  /v1/accounts/name/{name}:
+    get:
+      tags: [Accounts]
+      summary: Get account by name
+      description: Resolves a registered name to an account.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Account info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Account"
+        "404":
+          description: Name not found
+
+  /v1/posts:
+    get:
+      tags: [Posts]
+      summary: List posts
+      description: Paginated list of top-level posts. Replies excluded by default.
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, default: 20, maximum: 100 }
+        - name: author
+          in: query
+          schema: { type: string }
+          description: Filter by author address
+        - name: channel
+          in: query
+          schema: { type: string }
+          description: Filter by channel name
+        - name: includeReplies
+          in: query
+          schema: { type: boolean, default: false }
+          description: Include replies in results
+      responses:
+        "200":
+          description: Post list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostList"
+
+  /v1/posts/{id}:
+    get:
+      tags: [Posts]
+      summary: Get post by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, pattern: "^[a-f0-9]{64}$" }
+          description: Post ID (64-char hex)
+      responses:
+        "200":
+          description: Post
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Post"
+        "404":
+          description: Post not found
+
+  /v1/transactions:
+    post:
+      tags: [Transactions]
+      summary: Submit transaction
+      description: Submit a signed transaction to the network.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitTxRequest"
+      responses:
+        "200":
+          description: Submission result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmitTxResponse"
+
+  /v1/transactions/{hash}:
+    get:
+      tags: [Transactions]
+      summary: Get transaction
+      parameters:
+        - name: hash
+          in: path
+          required: true
+          schema: { type: string, pattern: "^[a-f0-9]{64}$" }
+      responses:
+        "200":
+          description: Transaction
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+        "404":
+          description: Transaction not found
+
+  /v1/transactions/{hash}/status:
+    get:
+      tags: [Transactions]
+      summary: Get transaction status
+      parameters:
+        - name: hash
+          in: path
+          required: true
+          schema: { type: string, pattern: "^[a-f0-9]{64}$" }
+      responses:
+        "200":
+          description: Transaction status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TxStatus"
+
+  /v1/network/validators:
+    get:
+      tags: [Network]
+      summary: List active validators
+      description: Returns the active validator set with stake amounts.
+      responses:
+        "200":
+          description: Validator list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Validator"
+
+  /v1/network/peers:
+    get:
+      tags: [Network]
+      summary: List connected peers
+      responses:
+        "200":
+          description: Peer list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Peer"
+
+components:
+  schemas:
+    NodeInfo:
+      type: object
+      properties:
+        chainId: { type: string, example: "drana-mainnet-1" }
+        latestHeight: { type: string, description: "uint64 encoded as string", example: "142" }
+        latestHash: { type: string, example: "a3f8..." }
+        genesisTime: { type: integer, format: int64 }
+        blockIntervalSec: { type: integer, example: 120 }
+        blockReward: { type: string, description: "uint64 encoded as string, microdrana", example: "10000000" }
+        burnedSupply: { type: string, description: "uint64 encoded as string, microdrana" }
+        issuedSupply: { type: string, description: "uint64 encoded as string, microdrana" }
+        validatorCount: { type: integer }
+        currentEpoch: { type: string, description: "uint64 encoded as string" }
+        epochLength: { type: string, description: "uint64 encoded as string", example: "30" }
+        blocksUntilNextEpoch: { type: string, description: "uint64 encoded as string" }
+
+    Block:
+      type: object
+      properties:
+        height: { type: string, description: "uint64 encoded as string" }
+        hash: { type: string, description: "64-char hex" }
+        prevHash: { type: string }
+        proposerAddr: { type: string, description: "drana1..." }
+        timestamp: { type: integer, format: int64 }
+        stateRoot: { type: string }
+        txRoot: { type: string }
+        txCount: { type: integer }
+        transactions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Transaction"
+
+    Account:
+      type: object
+      properties:
+        address: { type: string, example: "drana1abc..." }
+        balance: { type: string, description: "uint64 encoded as string, spendable microdrana" }
+        nonce: { type: string, description: "uint64 encoded as string" }
+        name: { type: string }
+        stakedBalance: { type: string, description: "uint64 encoded as string, validator staked microdrana" }
+        postStakeBalance: { type: string, description: "uint64 encoded as string, locked across post stakes" }
+
+    Unbonding:
+      type: object
+      properties:
+        address: { type: string }
+        entries:
+          type: array
+          items:
+            type: object
+            properties:
+              amount: { type: string, description: "uint64 encoded as string" }
+              releaseHeight: { type: string, description: "uint64 encoded as string" }
+        total: { type: string, description: "uint64 encoded as string" }
+
+    Post:
+      type: object
+      properties:
+        postId: { type: string, description: "64-char hex" }
+        author: { type: string }
+        text: { type: string }
+        channel: { type: string }
+        parentPostId: { type: string, description: "Empty for top-level posts" }
+        createdAtHeight: { type: string, description: "uint64 encoded as string" }
+        createdAtTime: { type: integer, format: int64 }
+        totalStaked: { type: string, description: "uint64 encoded as string, active staked microdrana" }
+        totalBurned: { type: string, description: "uint64 encoded as string, cumulative fees burned" }
+        stakerCount: { type: string, description: "uint64 encoded as string" }
+        withdrawn: { type: boolean }
+        boostCount: { type: string, description: "uint64 encoded as string" }
+
+    PostList:
+      type: object
+      properties:
+        posts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Post"
+        totalCount: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
+
+    SubmitTxRequest:
+      type: object
+      required: [type, sender, amount, nonce, signature, pubKey]
+      properties:
+        type:
+          type: string
+          enum: [transfer, create_post, boost_post, unstake_post, register_name, stake, unstake]
+        sender: { type: string, description: "drana1... address" }
+        recipient: { type: string, description: "For transfers" }
+        postId: { type: string, description: "For boost_post (64-char hex)" }
+        parentPostId: { type: string, description: "For replies (64-char hex)" }
+        text: { type: string, description: "For create_post or register_name" }
+        channel: { type: string, description: "For create_post" }
+        amount: { type: string, description: "uint64 encoded as string, microdrana" }
+        nonce: { type: string, description: "uint64 encoded as string" }
+        signature: { type: string, description: "Ed25519 signature (hex)" }
+        pubKey: { type: string, description: "Ed25519 public key (hex)" }
+
+    SubmitTxResponse:
+      type: object
+      properties:
+        accepted: { type: boolean }
+        txHash: { type: string }
+        error: { type: string }
+
+    Transaction:
+      type: object
+      properties:
+        hash: { type: string }
+        type: { type: string }
+        sender: { type: string }
+        recipient: { type: string }
+        postId: { type: string }
+        parentPostId: { type: string }
+        text: { type: string }
+        channel: { type: string }
+        amount: { type: string, description: "uint64 encoded as string" }
+        nonce: { type: string, description: "uint64 encoded as string" }
+        blockHeight: { type: string, description: "uint64 encoded as string" }
+
+    TxStatus:
+      type: object
+      properties:
+        hash: { type: string }
+        status:
+          type: string
+          enum: [confirmed, pending, unknown]
+        blockHeight: { type: string, description: "uint64 encoded as string" }
+
+    Validator:
+      type: object
+      properties:
+        address: { type: string }
+        name: { type: string }
+        pubKey: { type: string }
+        stakedBalance: { type: string, description: "uint64 encoded as string" }
+
+    Peer:
+      type: object
+      properties:
+        endpoint: { type: string }
+
+    Error:
+      type: object
+      properties:
+        error: { type: string }

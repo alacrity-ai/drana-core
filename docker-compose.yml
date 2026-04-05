@@ -1,0 +1,99 @@
+services:
+  validator-1:
+    build: .
+    container_name: validator-1
+    volumes:
+      - ./testnet/genesis.json:/data/genesis.json:ro
+      - ./testnet/validator-1/config.json:/data/config.json:ro
+      - validator-1-data:/data/db
+    ports:
+      - "26601:26601"
+      - "26657:26657"
+    networks:
+      - drana
+
+  validator-2:
+    build: .
+    container_name: validator-2
+    volumes:
+      - ./testnet/genesis.json:/data/genesis.json:ro
+      - ./testnet/validator-2/config.json:/data/config.json:ro
+      - validator-2-data:/data/db
+    ports:
+      - "26602:26602"
+      - "26658:26658"
+    networks:
+      - drana
+
+  validator-3:
+    build: .
+    container_name: validator-3
+    volumes:
+      - ./testnet/genesis.json:/data/genesis.json:ro
+      - ./testnet/validator-3/config.json:/data/config.json:ro
+      - validator-3-data:/data/db
+    ports:
+      - "26603:26603"
+      - "26659:26659"
+    networks:
+      - drana
+
+  indexer-db:
+    image: postgres:16-alpine
+    container_name: indexer-db
+    environment:
+      POSTGRES_DB: drana
+      POSTGRES_USER: drana
+      POSTGRES_PASSWORD: drana
+    volumes:
+      - indexer-pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U drana -d drana"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+    networks:
+      - drana
+
+  indexer:
+    build: .
+    container_name: drana-indexer
+    entrypoint: ["drana-indexer"]
+    command:
+      - "-rpc"
+      - "http://validator-1:26657"
+      - "-db"
+      - "postgres://drana:drana@indexer-db:5432/drana?sslmode=disable"
+      - "-listen"
+      - "0.0.0.0:26680"
+    ports:
+      - "26680:26680"
+    depends_on:
+      indexer-db:
+        condition: service_healthy
+      validator-1:
+        condition: service_started
+    restart: on-failure
+    networks:
+      - drana
+
+  web:
+    build: ./drana-app
+    container_name: drana-web
+    ports:
+      - "3000:3000"
+    depends_on:
+      - validator-1
+      - indexer
+    networks:
+      - drana
+
+volumes:
+  validator-1-data:
+  validator-2-data:
+  validator-3-data:
+  indexer-pg-data:
+
+networks:
+  drana:
+    driver: bridge

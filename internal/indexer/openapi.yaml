@@ -1,0 +1,446 @@
+openapi: "3.0.3"
+info:
+  title: DRANA Indexer API
+  description: |
+    Read-optimized query API for the DRANA blockchain. Provides ranked feeds,
+    author profiles, boost history, channel listings, and global analytics.
+
+    The indexer follows the chain and denormalizes data into a relational store.
+    It serves richer queries than the node RPC.
+
+    All amounts are in **microdrana** (1 DRANA = 1,000,000 microdrana).
+  version: "1.0.0"
+
+tags:
+  - name: Feed
+    description: Ranked post feeds
+  - name: Channels
+    description: Topic channels
+  - name: Posts
+    description: Enriched post data and boost history
+  - name: Authors
+    description: Author profiles
+  - name: Rewards
+    description: Reward events and summaries
+  - name: Analytics
+    description: Global statistics and leaderboard
+
+paths:
+  /v1/feed:
+    get:
+      tags: [Feed]
+      summary: Get ranked feed
+      description: Returns top-level posts ranked by the selected strategy. Replies are excluded.
+      parameters:
+        - name: strategy
+          in: query
+          schema:
+            type: string
+            enum: [trending, top, new, controversial]
+            default: trending
+          description: |
+            - **trending**: `log(1 + committed) / (1 + ageHours)^1.5`
+            - **top**: total committed (all-time)
+            - **new**: creation height (chronological)
+            - **controversial**: `stakerCount * log(1 + committed)`
+        - name: channel
+          in: query
+          schema: { type: string }
+          description: Filter by channel name
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, default: 20, maximum: 100 }
+      responses:
+        "200":
+          description: Ranked feed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedResponse"
+
+  /v1/feed/author/{address}:
+    get:
+      tags: [Feed]
+      summary: Get ranked feed by author
+      parameters:
+        - name: address
+          in: path
+          required: true
+          schema: { type: string }
+          description: Author address (drana1...)
+        - name: strategy
+          in: query
+          schema:
+            type: string
+            enum: [trending, top, new, controversial]
+            default: trending
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, default: 20, maximum: 100 }
+      responses:
+        "200":
+          description: Author feed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedResponse"
+
+  /v1/channels:
+    get:
+      tags: [Channels]
+      summary: List channels
+      description: Returns all channels with post counts, sorted by count descending.
+      responses:
+        "200":
+          description: Channel list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ChannelInfo"
+
+  /v1/posts/{id}:
+    get:
+      tags: [Posts]
+      summary: Get enriched post
+      description: Returns a post with all derived fields including author/third-party committed split.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, pattern: "^[a-f0-9]{64}$" }
+      responses:
+        "200":
+          description: Post
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IndexedPost"
+        "404":
+          description: Post not found
+
+  /v1/posts/{id}/boosts:
+    get:
+      tags: [Posts]
+      summary: Get boost history
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, default: 20, maximum: 100 }
+      responses:
+        "200":
+          description: Boost history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BoostHistory"
+
+  /v1/posts/{id}/replies:
+    get:
+      tags: [Posts]
+      summary: Get replies
+      description: Returns replies to a post, sorted by committed value.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, default: 20, maximum: 100 }
+      responses:
+        "200":
+          description: Replies
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReplyList"
+
+  /v1/authors/{address}:
+    get:
+      tags: [Authors]
+      summary: Get author profile
+      parameters:
+        - name: address
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Author profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthorProfile"
+        "404":
+          description: Author not found
+
+  /v1/rewards/{address}:
+    get:
+      tags: [Rewards]
+      summary: Get reward events
+      description: Returns paginated reward events for an address (author rewards and staker rewards).
+      parameters:
+        - name: address
+          in: path
+          required: true
+          schema: { type: string }
+          description: Recipient address (drana1...)
+        - name: since
+          in: query
+          schema: { type: integer, default: 0 }
+          description: Only return events at or above this block height
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, default: 20, maximum: 100 }
+      responses:
+        "200":
+          description: Reward event list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RewardEventList"
+
+  /v1/rewards/{address}/summary:
+    get:
+      tags: [Rewards]
+      summary: Get reward summary
+      description: Returns aggregate reward stats (24h, 7d, all-time) plus stake counts.
+      parameters:
+        - name: address
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Reward summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RewardSummary"
+
+  /v1/rewards/{address}/post/{postId}:
+    get:
+      tags: [Rewards]
+      summary: Get per-post reward total
+      description: Returns total lifetime rewards earned by an address from a specific post.
+      parameters:
+        - name: address
+          in: path
+          required: true
+          schema: { type: string }
+        - name: postId
+          in: path
+          required: true
+          schema: { type: string, pattern: "^[a-f0-9]{64}$" }
+      responses:
+        "200":
+          description: Per-post reward total
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  totalReward: { type: string, description: "uint64 encoded as string" }
+
+  /v1/stats:
+    get:
+      tags: [Analytics]
+      summary: Get global statistics
+      responses:
+        "200":
+          description: Chain stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stats"
+
+  /v1/leaderboard:
+    get:
+      tags: [Analytics]
+      summary: Get author leaderboard
+      description: Top authors ranked by total boosts received.
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, default: 20, maximum: 100 }
+      responses:
+        "200":
+          description: Leaderboard
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Leaderboard"
+
+components:
+  schemas:
+    FeedResponse:
+      type: object
+      properties:
+        posts:
+          type: array
+          items:
+            $ref: "#/components/schemas/RankedPost"
+        totalCount: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
+        strategy: { type: string }
+
+    RankedPost:
+      allOf:
+        - $ref: "#/components/schemas/IndexedPost"
+        - type: object
+          properties:
+            score: { type: number, format: float64 }
+
+    IndexedPost:
+      type: object
+      properties:
+        postId: { type: string }
+        author: { type: string }
+        text: { type: string }
+        channel: { type: string }
+        parentPostId: { type: string }
+        createdAtHeight: { type: string, description: "uint64 encoded as string" }
+        createdAtTime: { type: integer, format: int64 }
+        totalStaked: { type: string, description: "uint64 encoded as string, active staked microdrana" }
+        totalBurned: { type: string, description: "uint64 encoded as string, cumulative fees burned" }
+        authorStaked: { type: string, description: "uint64 encoded as string" }
+        thirdPartyStaked: { type: string, description: "uint64 encoded as string" }
+        withdrawn: { type: boolean }
+        stakerCount: { type: string, description: "uint64 encoded as string" }
+        uniqueBoosterCount: { type: integer }
+        lastBoostAtHeight: { type: string, description: "uint64 encoded as string" }
+        replyCount: { type: integer }
+
+    BoostHistory:
+      type: object
+      properties:
+        boosts:
+          type: array
+          items:
+            $ref: "#/components/schemas/Boost"
+        totalCount: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
+
+    Boost:
+      type: object
+      properties:
+        postId: { type: string }
+        booster: { type: string }
+        amount: { type: string, description: "uint64 encoded as string, total boost amount" }
+        authorReward: { type: string, description: "uint64 encoded as string, amount paid to post author (2%)" }
+        stakerReward: { type: string, description: "uint64 encoded as string, amount distributed to stakers (1%)" }
+        burnAmount: { type: string, description: "uint64 encoded as string, amount burned (3%)" }
+        stakedAmount: { type: string, description: "uint64 encoded as string, amount staked on post (94%)" }
+        blockHeight: { type: string, description: "uint64 encoded as string" }
+        blockTime: { type: integer, format: int64 }
+        txHash: { type: string }
+
+    ReplyList:
+      type: object
+      properties:
+        replies:
+          type: array
+          items:
+            $ref: "#/components/schemas/IndexedPost"
+        totalCount: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
+
+    ChannelInfo:
+      type: object
+      properties:
+        channel: { type: string, example: "gaming" }
+        postCount: { type: integer, example: 15 }
+
+    AuthorProfile:
+      type: object
+      properties:
+        address: { type: string }
+        postCount: { type: integer }
+        totalStaked: { type: string, description: "uint64 encoded as string" }
+        totalReceived: { type: string, description: "uint64 encoded as string" }
+        uniqueBoosterCount: { type: integer }
+
+    Stats:
+      type: object
+      properties:
+        latestHeight: { type: string, description: "uint64 encoded as string" }
+        totalPosts: { type: integer }
+        totalBoosts: { type: integer }
+        totalTransfers: { type: integer }
+        totalBurned: { type: string, description: "uint64 encoded as string" }
+        totalIssued: { type: string, description: "uint64 encoded as string" }
+        circulatingSupply: { type: string, description: "uint64 encoded as string" }
+
+    Leaderboard:
+      type: object
+      properties:
+        authors:
+          type: array
+          items:
+            type: object
+            properties:
+              address: { type: string }
+              totalReceived: { type: string, description: "uint64 encoded as string" }
+              postCount: { type: integer }
+              stakerCount: { type: integer }
+        totalCount: { type: integer }
+        page: { type: integer }
+        pageSize: { type: integer }
+
+    RewardEvent:
+      type: object
+      properties:
+        postId: { type: string }
+        recipient: { type: string }
+        amount: { type: string, description: "uint64 encoded as string" }
+        blockHeight: { type: string, description: "uint64 encoded as string" }
+        blockTime: { type: integer, format: int64 }
+        triggerTx: { type: string, description: "Hash of the boost tx that triggered this reward" }
+        triggerAddress: { type: string, description: "Address of the booster who triggered this reward" }
+        type: { type: string, enum: [author, staker], description: "Whether this was an author reward or staker reward" }
+
+    RewardEventList:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/RewardEvent"
+        totalCount: { type: integer }
+        totalAmount: { type: string, description: "uint64 encoded as string, sum of all matching reward amounts" }
+
+    RewardSummary:
+      type: object
+      properties:
+        last24h: { type: string, description: "uint64 encoded as string, rewards earned in last 24 hours" }
+        last7d: { type: string, description: "uint64 encoded as string, rewards earned in last 7 days" }
+        allTime: { type: string, description: "uint64 encoded as string, total lifetime rewards" }
+        postCount: { type: integer, description: "Number of posts with active stakes" }
+        totalStaked: { type: string, description: "uint64 encoded as string, total microdrana staked across all posts" }

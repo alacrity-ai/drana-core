@@ -1,0 +1,28 @@
+:root {
+  --bg-primary: #0A0A0F;
+  --bg-surface: #12121A;
+  --bg-elevated: #1A1A26;
+  --border: #2A2A3A;
+
+  --text-primary: #E8E8ED;
+  --text-secondary: #8888A0;
+  --text-muted: #555566;
+
+  --accent: #F59E0B;
+  --accent-glow: #F59E0B20;
+  --accent-hover: #FBBF24;
+  --accent-dim: #F59E0B08;
+
+  --success: #10B981;
+  --error: #EF4444;
+  --info: #6366F1;
+  --channel: #3B82F6;
+  --reply: #8B5CF6;
+
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  --topbar-height: 56px;
+  --max-width: 720px;
+  --transition: 100ms ease;
+}

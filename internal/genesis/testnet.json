@@ -1,0 +1,42 @@
+{
+  "chainId": "drana-testnet-1",
+  "genesisTime": 1700000000,
+  "accounts": [
+    {
+      "address": "drana1ab62160bdb816fcb68ac0abfe7356f24324bc42d9134c2e3",
+      "balance": 1000000000000
+    },
+    {
+      "address": "drana17ff4f3b6a0f48643f34fb7b0ed342f861bf438697456f6fc",
+      "balance": 1000000000000
+    },
+    {
+      "address": "drana19f5e25585edfcd4aed04141bdbcba53652a08514abcee9b4",
+      "balance": 1000000000000
+    }
+  ],
+  "validators": [
+    {
+      "address": "drana1ab62160bdb816fcb68ac0abfe7356f24324bc42d9134c2e3",
+      "pubKey": "5edb01862ba4f90dee2130d172fc7da3214078b1429bce9c4b0e445a22701be5",
+      "name": "validator-1"
+    },
+    {
+      "address": "drana17ff4f3b6a0f48643f34fb7b0ed342f861bf438697456f6fc",
+      "pubKey": "7e954498b3900ba94da13295b490efd8278c7556420d41d42f186c2884ce470e",
+      "name": "validator-2"
+    },
+    {
+      "address": "drana19f5e25585edfcd4aed04141bdbcba53652a08514abcee9b4",
+      "pubKey": "58015594e41175b50eddd918a7ef38523ddbad4b37f166074b1b0e25e4eee1a0",
+      "name": "validator-3"
+    }
+  ],
+  "maxPostLength": 280,
+  "maxPostBytes": 1024,
+  "minPostCommitment": 1000000,
+  "minBoostCommitment": 100000,
+  "maxTxPerBlock": 100,
+  "maxBlockBytes": 1048576,
+  "blockIntervalSec": 120
+}

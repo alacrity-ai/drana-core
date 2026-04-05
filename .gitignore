@@ -1,0 +1,33 @@
+# Binaries
+bin/
+drana-node
+drana-indexer
+
+# Generated testnet config
+testnet/
+
+# Databases
+*.db
+*.db-shm
+*.db-wal
+*.db-journal
+
+# Network private files — NEVER commit these
+networks/*/validator.key
+networks/*/node-config.json
+networks/*/data/
+
+# Environment
+.env
+.env.*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

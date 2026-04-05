@@ -1,0 +1,31 @@
+{
+  "chainId": "drana-mainnet-1",
+  "genesisTime": 1775229883,
+  "accounts": [
+    {
+      "address": "drana17ab407ed09b883aaf803dc6409e88fd2f323f99e06f1b027",
+      "balance": 100000000000000
+    }
+  ],
+  "validators": [
+    {
+      "address": "drana17ab407ed09b883aaf803dc6409e88fd2f323f99e06f1b027",
+      "pubKey": "9744f081ddda96d068a75fcf77ed43ccaac9e14447ab33d6923004ac1e2f3c61",
+      "name": "genesis-validator",
+      "stake": 1000000000000
+    }
+  ],
+  "maxPostLength": 280,
+  "maxPostBytes": 1024,
+  "minPostCommitment": 1000000,
+  "minBoostCommitment": 100000,
+  "maxTxPerBlock": 100,
+  "maxBlockBytes": 1048576,
+  "blockIntervalSec": 120,
+  "blockReward": 10000000,
+  "minStake": 1000000000,
+  "epochLength": 30,
+  "unbondingPeriod": 30,
+  "slashFractionDoubleSign": 5,
+  "seedNodes": ["genesis-validator.drana.io:26601"]
+}

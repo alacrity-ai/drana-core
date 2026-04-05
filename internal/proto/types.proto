@@ -1,0 +1,90 @@
+syntax = "proto3";
+package drana.v1;
+option go_package = "github.com/drana-chain/drana/internal/proto/pb";
+
+message Account {
+  bytes address = 1;
+  uint64 balance = 2;
+  uint64 nonce = 3;
+  string name = 4;
+}
+
+message Post {
+  bytes post_id = 1;
+  bytes author = 2;
+  string text = 3;
+  uint64 created_at_height = 4;
+  int64 created_at_time = 5;
+  uint64 total_committed = 6;
+  uint64 boost_count = 7;
+  string channel = 8;
+  bytes parent_post_id = 9;
+}
+
+message Transaction {
+  uint32 type = 1;
+  bytes sender = 2;
+  bytes recipient = 3;
+  bytes post_id = 4;
+  string text = 5;
+  uint64 amount = 6;
+  uint64 nonce = 7;
+  bytes signature = 8;
+  bytes pub_key = 9;
+  string channel = 10;
+}
+
+message BlockHeader {
+  uint64 height = 1;
+  bytes prev_hash = 2;
+  bytes proposer_addr = 3;
+  int64 timestamp = 4;
+  bytes state_root = 5;
+  bytes tx_root = 6;
+}
+
+message Block {
+  BlockHeader header = 1;
+  repeated Transaction transactions = 2;
+  QuorumCertificate qc = 3;
+}
+
+message BlockVote {
+  uint64 height = 1;
+  bytes block_hash = 2;
+  bytes voter_address = 3;
+  bytes voter_pub_key = 4;
+  bytes signature = 5;
+}
+
+message QuorumCertificate {
+  uint64 height = 1;
+  bytes block_hash = 2;
+  repeated BlockVote votes = 3;
+}
+
+message GenesisConfig {
+  string chain_id = 1;
+  int64 genesis_time = 2;
+  repeated GenesisAccount accounts = 3;
+  repeated GenesisValidator validators = 4;
+  int32 max_post_length = 5;
+  int32 max_post_bytes = 6;
+  uint64 min_post_commitment = 7;
+  uint64 min_boost_commitment = 8;
+  int32 max_tx_per_block = 9;
+  int32 max_block_bytes = 10;
+  int32 block_interval_sec = 11;
+  uint64 block_reward = 12;
+}
+
+message GenesisAccount {
+  bytes address = 1;
+  uint64 balance = 2;
+}
+
+message GenesisValidator {
+  bytes address = 1;
+  bytes pub_key = 2;
+  string name = 3;
+}
